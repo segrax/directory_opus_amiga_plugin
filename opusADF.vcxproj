@@ -102,7 +102,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;OPUSADF_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;LITT_ENDIAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;OPUSADF_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;LITT_ENDIAN;DOPUS_PLUGIN_HELPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>ADFlib\src\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
