@@ -364,7 +364,7 @@ int cADFPluginData::Delete(LPVFSBATCHDATAA lpBatchData, const std::string& pPath
 
                 if (Filename[Filename.size() - 1] != '\\')
                     Filename += "\\";
-
+                
                 Filename += entry->name;
 
                 if (entry->type == ST_FILE) {
@@ -375,7 +375,7 @@ int cADFPluginData::Delete(LPVFSBATCHDATAA lpBatchData, const std::string& pPath
 
                 if (entry->type == ST_DIR) {
 
-                    Delete(lpBatchData, pFile, entry->name, true);
+                    Delete(lpBatchData, Filename, entry->name, true);
                     result |= adfRemoveEntry(mAdfVolume, entry->parent, entry->name);
                     AdfChangeToPath(pPath);
                     if (!result)
@@ -404,6 +404,8 @@ int cADFPluginData::ImportFile(LPVFSBATCHDATAA lpBatchData, const std::string& p
     CloseHandle(filename);
 
     auto File = adfOpenFile(mAdfVolume, (char*)Depth[Depth.size() - 1].c_str(), (char*) "w");
+    if (!File)
+        return 1;
 
     SetEntryTime(File, ft);
     adfWriteFile(File, FileData.size(), reinterpret_cast<uint8_t*>(&FileData[0]));
@@ -449,6 +451,11 @@ std::vector<std::string> directoryList(const std::string pPath) {
 }
 
 int cADFPluginData::ImportPath(LPVFSBATCHDATAA lpBatchData, const std::string& pFile, const std::string& pPath) {
+
+    std::string FinalPath = pPath;
+    if (FinalPath[FinalPath.size() - 1] != '\\')
+        FinalPath += "\\";
+
     auto Depth = tokenize(pPath, "\\\\");
     std::string Final = pFile;
     if (Final[Final.size() - 1] != '\\')
@@ -466,13 +473,13 @@ int cADFPluginData::ImportPath(LPVFSBATCHDATAA lpBatchData, const std::string& p
 
         if (!Depth[Depth.size() - 1].compare(entry->name)) {
 
-            auto contents = directoryList(pPath + "*.*");
+            auto contents = directoryList(FinalPath + "*.*");
 
             for (auto& File : contents) {
                 if (File == "." || File == "..")
                     continue;
 
-                Import(lpBatchData, pFile + "\\" + Depth[Depth.size() - 1] + "\\", pPath + File);
+                Import(lpBatchData, pFile + "\\" + Depth[Depth.size() - 1] + "\\", FinalPath + File);
             }
 
         }
@@ -619,6 +626,8 @@ UINT cADFPluginData::BatchOperation(LPTSTR lpszPath, LPVFSBATCHDATAA lpBatchData
     auto File = lpBatchData->pszFiles;
 
     for (int i = 0; i < lpBatchData->iNumFiles; ++i) {
+
+        DOpus.UpdateFunctionProgressBar(lpBatchData->lpFuncData, PROGRESSACTION_SETFILENAME, (DWORD_PTR) File);
 
         if (lpBatchData->uiOperation == VFSBATCHOP_EXTRACT) {
             lpBatchData->piResults[i] = Extract(File, lpBatchData->pszDestPath);
