@@ -50,7 +50,7 @@ PREFIX void freeList(struct List* list);
 
 /* dir */
 PREFIX RETCODE adfToRootDir(struct Volume *vol);
-PREFIX RETCODE adfCreateDir(struct Volume* vol, SECTNUM parent, char* name);
+PREFIX RETCODE adfCreateDir(struct Volume* vol, SECTNUM parent, char* name, struct DateTime dt);
 PREFIX RETCODE adfChangeDir(struct Volume* vol, char *name);
 PREFIX RETCODE adfParentDir(struct Volume* vol);
 PREFIX RETCODE adfRemoveEntry(struct Volume *vol, SECTNUM pSect, char *name);

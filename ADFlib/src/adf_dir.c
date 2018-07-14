@@ -859,7 +859,7 @@ void printEntry(struct Entry* entry)
  * adfCreateDir
  *
  */
-RETCODE adfCreateDir(struct Volume* vol, SECTNUM nParent, char* name)
+RETCODE adfCreateDir(struct Volume* vol, SECTNUM nParent, char* name, struct DateTime pDateTime)
 {
     SECTNUM nSect;
     struct bDirBlock dir;
@@ -883,7 +883,11 @@ RETCODE adfCreateDir(struct Volume* vol, SECTNUM nParent, char* name)
         dir.parent = vol->rootBlock;
     else
         dir.parent = parent.headerKey;
-    adfTime2AmigaTime(adfGiveCurrentTime(),&(dir.days),&(dir.mins),&(dir.ticks));
+
+    if (pDateTime.year == 0)
+        pDateTime = adfGiveCurrentTime();
+
+    adfTime2AmigaTime(pDateTime,&(dir.days),&(dir.mins),&(dir.ticks));
 
     if (isDIRCACHE(vol->dosType)) {
         /* for adfCreateEmptyCache, will be added by adfWriteDirBlock */
