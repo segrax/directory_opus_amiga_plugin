@@ -350,7 +350,7 @@ bool cADFPluginData::ReadFile(File* pFile, size_t pBytes, std::uint8_t* pBuffer)
     if (!pFile)
         return false;
 
-    return (adfReadFile(pFile, pBytes, pBuffer) > 0);
+    return (adfReadFile(pFile, (int32_t) pBytes, pBuffer) > 0);
 }
 
 File* cADFPluginData::OpenFile(std::wstring pPath) {
@@ -539,7 +539,7 @@ int cADFPluginData::ImportFile(LPVFSBATCHDATAW lpBatchData, const std::wstring& 
         return 1;
 
     SetEntryTime(File, ft);
-    adfWriteFile(File, FileData.size(), reinterpret_cast<uint8_t*>(&FileData[0]));
+    adfWriteFile(File, (int32_t) FileData.size(), reinterpret_cast<uint8_t*>(&FileData[0]));
     adfCloseFile(File);
 
     std::wstring Final = pFile;

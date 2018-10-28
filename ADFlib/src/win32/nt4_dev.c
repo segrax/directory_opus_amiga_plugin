@@ -28,13 +28,13 @@
 
 HANDLE NT4OpenDrive(char *lpstrDrive)
 {
-	char strDriveFile[40];
+	wchar_t strDriveFile[40];
 	HANDLE hDrv;
 	DWORD dwRet;
 
 	switch (lpstrDrive[0]) {
 		case 'H':
-			sprintf(strDriveFile, "\\\\.\\PhysicalDrive%c", lpstrDrive[1]);
+			wsprintf(strDriveFile, L"\\\\.\\PhysicalDrive%c", lpstrDrive[1]);
 			break;
 		/* add support for other device types here */
 		default:
