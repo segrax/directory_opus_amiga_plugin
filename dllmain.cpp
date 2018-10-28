@@ -9,19 +9,19 @@ HINSTANCE g_hModuleInstance = 0;
 
 extern "C"
 {
-    __declspec(dllexport) bool VFS_IdentifyA(LPVFSPLUGININFOA lpVFSInfo);
-    __declspec(dllexport) bool VFS_ReadDirectoryA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPVFSREADDIRDATAA lpRDD);
+    __declspec(dllexport) bool VFS_IdentifyW(LPVFSPLUGININFOW lpVFSInfo);
+    __declspec(dllexport) bool VFS_ReadDirectoryW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPVFSREADDIRDATAW lpRDD);
 
     __declspec(dllexport) HANDLE VFS_Create(LPGUID pGuid);
     __declspec(dllexport) void VFS_Destroy(HANDLE hData);
 
-    __declspec(dllexport) int VFS_ContextVerbA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPVFSCONTEXTVERBDATAA lpVerbData);
-    __declspec(dllexport) UINT VFS_BatchOperationA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPTSTR lpszPath, LPVFSBATCHDATAA lpBatchData);
-    
-    __declspec(dllexport) bool VFS_GetFreeDiskSpaceA(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPTSTR lpszPath, unsigned __int64* piFreeBytesAvailable, unsigned __int64* piTotalBytes, unsigned __int64* piTotalFreeBytes);
+    __declspec(dllexport) int VFS_ContextVerbW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPVFSCONTEXTVERBDATAW lpVerbData);
+    __declspec(dllexport) UINT VFS_BatchOperationW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPWSTR lpszPath, LPVFSBATCHDATAW lpBatchData);
 
-    __declspec(dllexport) HANDLE VFS_FindFirstFileA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPTSTR lpszPath, LPWIN32_FIND_DATA lpwfdData, HANDLE hAbortEvent);
-    __declspec(dllexport) bool VFS_FindNextFileA(HANDLE hData, LPVFSFUNCDATA lpVFSData, HANDLE hFind, LPWIN32_FIND_DATA lpwfdData);
+    __declspec(dllexport) bool VFS_GetFreeDiskSpaceW(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPWSTR lpszPath, unsigned __int64* piFreeBytesAvailable, unsigned __int64* piTotalBytes, unsigned __int64* piTotalFreeBytes);
+
+    __declspec(dllexport) HANDLE VFS_FindFirstFileW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPWSTR lpszPath, LPWIN32_FIND_DATA lpwfdData, HANDLE hAbortEvent);
+    __declspec(dllexport) bool VFS_FindNextFileW(HANDLE hData, LPVFSFUNCDATA lpVFSData, HANDLE hFind, LPWIN32_FIND_DATA lpwfdData);
     __declspec(dllexport) void VFS_FindClose(HANDLE hData, HANDLE hFind);
     __declspec(dllexport) bool VFS_USBSafe(LPOPUSUSBSAFEDATA pUSBSafeData);
     __declspec(dllexport) bool VFS_Init(LPVFSINITDATA pInitData);
@@ -45,17 +45,17 @@ void VFS_Uninit() {
     adfEnvCleanUp();
 }
 
-bool VFS_IdentifyA(LPVFSPLUGININFOA lpVFSInfo) {
+bool VFS_IdentifyW(LPVFSPLUGININFOW lpVFSInfo) {
     // Initialise plugin information
     lpVFSInfo->idPlugin = GUIDPlugin_ADF;
     lpVFSInfo->dwFlags = VFSF_CANCONFIGURE | VFSF_NONREENTRANT;
     lpVFSInfo->dwCapabilities = VFSCAPABILITY_CASESENSITIVE | VFSCAPABILITY_POSTCOPYREREAD | VFSCAPABILITY_READONLY;
 
-    strcpy_s(lpVFSInfo->lpszHandleExts, lpVFSInfo->cchHandleExtsMax, ".adf;.hdf");
-    strcpy_s(lpVFSInfo->lpszName, lpVFSInfo->cchNameMax, "ADF");
-    strcpy_s(lpVFSInfo->lpszDescription, lpVFSInfo->cchDescriptionMax, "ADF Ext");
-    strcpy_s(lpVFSInfo->lpszCopyright, lpVFSInfo->cchCopyrightMax, "(c) Copyright 2018 Robert Crossfield");
-    strcpy_s(lpVFSInfo->lpszURL, lpVFSInfo->cchURLMax, "github.com/segrax");
+    StringCchCopyW(lpVFSInfo->lpszHandleExts, lpVFSInfo->cchHandleExtsMax, L".adf;.hdf");
+    StringCchCopyW(lpVFSInfo->lpszName, lpVFSInfo->cchNameMax, L"Amiga ADF/HDF");
+    StringCchCopyW(lpVFSInfo->lpszDescription, lpVFSInfo->cchDescriptionMax, L"Amiga Dos disk support");
+    StringCchCopyW(lpVFSInfo->lpszCopyright, lpVFSInfo->cchCopyrightMax, L"(c) Copyright 2018 Robert Crossfield");
+    StringCchCopyW(lpVFSInfo->lpszURL, lpVFSInfo->cchURLMax, L"github.com/segrax");
 
     return true;
 }
@@ -72,20 +72,20 @@ void VFS_Destroy(HANDLE hData) {
     delete (cADFPluginData*)hData;
 }
 
-bool VFS_ReadDirectoryA(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPVFSREADDIRDATAA lpRDD) {
+bool VFS_ReadDirectoryW(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPVFSREADDIRDATAW lpRDD) {
     return (hData) ? ((cADFPluginData*)hData)->ReadDirectory(lpRDD) : false;
 }
 
-int VFS_ContextVerbA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPVFSCONTEXTVERBDATAA lpVerbData) {
+int VFS_ContextVerbW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPVFSCONTEXTVERBDATAW lpVerbData) {
 
     return (hData) ? ((cADFPluginData*)hData)->ContextVerb(lpVerbData) : VFSCVRES_FAIL;
 }
 
-UINT VFS_BatchOperationA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPTSTR lpszPath, LPVFSBATCHDATAA lpBatchData) {
+UINT VFS_BatchOperationW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPWSTR lpszPath, LPVFSBATCHDATAW lpBatchData) {
     return (hData) ? ((cADFPluginData*)hData)->BatchOperation(lpszPath, lpBatchData) : VFSCVRES_FAIL;
 }
 
-bool VFS_GetFreeDiskSpaceA(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPTSTR lpszPath, unsigned __int64* piFreeBytesAvailable, unsigned __int64* piTotalBytes, unsigned __int64* piTotalFreeBytes) {
+bool VFS_GetFreeDiskSpaceW(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPWSTR lpszPath, unsigned __int64* piFreeBytesAvailable, unsigned __int64* piTotalBytes, unsigned __int64* piTotalFreeBytes) {
 
     if (!hData)
         return false;
@@ -102,12 +102,12 @@ bool VFS_GetFreeDiskSpaceA(HANDLE hData, LPVFSFUNCDATA lpFuncData, LPTSTR lpszPa
     return true;
 }
 
-HANDLE VFS_FindFirstFileA(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPTSTR lpszPath, LPWIN32_FIND_DATA lpwfdData, HANDLE hAbortEvent) {
+HANDLE VFS_FindFirstFileW(HANDLE hData, LPVFSFUNCDATA lpVFSData, LPWSTR lpszPath, LPWIN32_FIND_DATA lpwfdData, HANDLE hAbortEvent) {
 
     return (hData) ? (HANDLE)((cADFPluginData*)hData)->FindFirstFile(lpszPath, lpwfdData, hAbortEvent) : INVALID_HANDLE_VALUE;
 }
 
-bool VFS_FindNextFileA(HANDLE hData, LPVFSFUNCDATA lpVFSData, HANDLE hFind, LPWIN32_FIND_DATA lpwfdData) {
+bool VFS_FindNextFileW(HANDLE hData, LPVFSFUNCDATA lpVFSData, HANDLE hFind, LPWIN32_FIND_DATA lpwfdData) {
     return (hData && hFind) ? ((cADFPluginData*)hData)->FindNextFile((cADFFindData*)hFind, lpwfdData) : false;
 }
 

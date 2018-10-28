@@ -5,8 +5,8 @@ typedef std::shared_ptr<Volume> spVolume;
 typedef std::weak_ptr<Device>   wpDevice;
 typedef std::weak_ptr<Volume>   wpVolume;
 
-extern std::map<std::string, wpDevice>  gOpenFiles;
-extern std::map<std::string, wpVolume>     gOpenVolume;
+extern std::map<std::wstring, wpDevice>  gOpenFiles;
+extern std::map<std::wstring, wpVolume>     gOpenVolume;
 
 class cADFFindData {
 
@@ -22,7 +22,7 @@ class cADFPluginData {
 
     HINSTANCE				mAdfDll;
     size_t                  mLastError;
-    std::string             mPath;
+    std::wstring             mPath;
 
     spDevice                 mAdfDevice;
     spVolume                 mAdfVolume;
@@ -35,40 +35,40 @@ protected:
     FILETIME            GetFileTime(const Entry *pEntry);
     void                SetEntryTime(File *pFile, FILETIME pFT);
 
-    bool LoadFile(const std::string& pAfPath);
+    bool LoadFile(const std::wstring& pAfPath);
     spList GetCurrentDirectoryList();
 
 public:
     cADFPluginData();
     ~cADFPluginData();
 
-    std::vector<std::string> GetPaths(std::string pPath);
+    std::vector<std::wstring> GetPaths(std::wstring pPath);
 
-    bool AdfChangeToPath(const std::string& pPath, bool pIgnoreLast = false);
+    bool AdfChangeToPath(const std::wstring& pPath, bool pIgnoreLast = false);
 
-    bool ReadDirectory(LPVFSREADDIRDATAA lpRDD);
+    bool ReadDirectory(LPVFSREADDIRDATAW lpRDD);
     bool ReadFile(File* pFile, size_t pBytes, std::uint8_t* pBuffer );
 
-    File* OpenFile(std::string pPath);
+    File* OpenFile(std::wstring pPath);
     void CloseFile(File* pFile);
  
-    size_t TotalFreeBlocks(const std::string& pFile);
-    size_t TotalDiskBlocks(const std::string& pFile);
+    size_t TotalFreeBlocks(const std::wstring& pFile);
+    size_t TotalDiskBlocks(const std::wstring& pFile);
 
-    int Delete(LPVFSBATCHDATAA lpBatchData, const std::string& pPath, const std::string& pFile, bool pAll = false);
+    int Delete(LPVFSBATCHDATAW lpBatchData, const std::wstring& pPath, const std::wstring& pFile, bool pAll = false);
 
     cADFFindData *FindFirstFile(LPTSTR lpszPath, LPWIN32_FIND_DATA lpwfdData, HANDLE hAbortEvent);
     bool FindNextFile(cADFFindData* lpRAF, LPWIN32_FIND_DATA lpwfdData);
     void FindClose(cADFFindData* lpRAF);
 
-    int Import(LPVFSBATCHDATAA lpBatchData, const std::string& pFile, const std::string& pPath);
-    int ImportFile(LPVFSBATCHDATAA lpBatchData, const std::string& pFile, const std::string& pPath);
-    int ImportPath(LPVFSBATCHDATAA lpBatchData, const std::string& pFile, const std::string& pPath);
+    int Import(LPVFSBATCHDATAW lpBatchData, const std::wstring& pFile, const std::wstring& pPath);
+    int ImportFile(LPVFSBATCHDATAW lpBatchData, const std::wstring& pFile, const std::wstring& pPath);
+    int ImportPath(LPVFSBATCHDATAW lpBatchData, const std::wstring& pFile, const std::wstring& pPath);
 
-    int Extract(LPVFSBATCHDATAA lpBatchData, const std::string& pFile, const std::string& pDest);
-    int ExtractFile(LPVFSBATCHDATAA lpBatchData, const Entry* pEntry, const std::string& pDest);
-    int ExtractPath(LPVFSBATCHDATAA lpBatchData, const std::string& pPath, const std::string& pDest);
+    int Extract(LPVFSBATCHDATAW lpBatchData, const std::wstring& pFile, const std::wstring& pDest);
+    int ExtractFile(LPVFSBATCHDATAW lpBatchData, const Entry* pEntry, const std::wstring& pDest);
+    int ExtractPath(LPVFSBATCHDATAW lpBatchData, const std::wstring& pPath, const std::wstring& pDest);
 
-    int ContextVerb(LPVFSCONTEXTVERBDATAA lpVerbData);
-    UINT BatchOperation(LPTSTR lpszPath, LPVFSBATCHDATAA lpBatchData);
+    int ContextVerb(LPVFSCONTEXTVERBDATAW lpVerbData);
+    UINT BatchOperation(LPTSTR lpszPath, LPVFSBATCHDATAW lpBatchData);
 };
