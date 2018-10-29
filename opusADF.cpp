@@ -3,10 +3,28 @@
 
 #include "stdafx.h"
 #include "ADFlib/src/adflib.h"
+#include <clocale>
+#include <locale>
+#include <string>
+#include <iostream>
+#include <codecvt>
 
 DOpusPluginHelperFunction DOpus;
-std::map<std::wstring, wpDevice> gOpenFiles;
-std::map<std::wstring, wpVolume>     gOpenVolume;
+
+std::wstring s2ws(const std::string& str) {
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+    return converterX.from_bytes(str);
+}
+
+std::string ws2s(const std::wstring& wstr) {
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+    return converterX.to_bytes(wstr);
+}
+
 
 bool adfIsLeap(int y) {
     return((bool)(!(y % 100) ? !(y % 400) : !(y % 4)));
@@ -62,29 +80,6 @@ std::vector<std::wstring> tokenize(const std::wstring& in, const std::wstring& d
 
     return tokens;
 }
-
-#include <clocale>
-#include <locale>
-#include <string>
-#include <iostream>
-#include <codecvt>
-
-std::wstring s2ws(const std::string& str)
-{
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-    return converterX.from_bytes(str);
-}
-
-std::string ws2s(const std::wstring& wstr)
-{
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
-
-    return converterX.to_bytes(wstr);
-}
-
 
 cADFPluginData::cADFPluginData() {
     mAdfDevice = 0;
@@ -217,14 +212,17 @@ bool cADFPluginData::AdfChangeToPath(const std::wstring& pPath, bool pIgnoreLast
                     if (!Depth[0].compare(Filename)) {
 
                         // Free current cell, and load the next
-                        adfChangeDir(mAdfVolume.get(), entry->name);
+                        if (entry->type == ST_DIR || entry->type == ST_LDIR || Depth.size() > 1) {
+                            adfChangeDir(mAdfVolume.get(), entry->name);
 
-                        head = GetCurrentDirectoryList();
-                        cell = head.get();
+                            head = GetCurrentDirectoryList();
+                            cell = head.get();
+                        }
+
                         Depth.erase(Depth.begin());
 
                         // Empty folder?
-                        if (!cell)
+                        if (!cell || !Depth.size())
                             return true;
 
                         continue;
@@ -257,38 +255,15 @@ bool cADFPluginData::LoadFile(const std::wstring& pAdfPath) {
 
     if (!mAdfDevice || !mAdfVolume) {
         // Find an open device for this disk image
-        auto ExistingDev = gOpenFiles.find(AdfPath);
-        if (ExistingDev != gOpenFiles.end() && ExistingDev->second.expired()) {
-            gOpenFiles.erase(ExistingDev);
-            ExistingDev = gOpenFiles.end();
-        }
-        if (ExistingDev != gOpenFiles.end()) {
-            mAdfDevice = ExistingDev->second.lock();
-        } else {
-            auto Filepath = ws2s(AdfPath);
+        auto Filepath = ws2s(AdfPath);
 
-            mAdfDevice = std::move(std::shared_ptr<Device>(adfMountDev(const_cast<CHAR*>(Filepath.c_str()), true), adfUnMountDev));
-            gOpenFiles.insert(std::make_pair(AdfPath, mAdfDevice));
-        }
-        // Do we have a device?
-        if (mAdfDevice) {
-            // Find an open volume for this device
-            auto Vol = gOpenVolume.find(AdfPath);
-            if (Vol != gOpenVolume.end() && Vol->second.expired()) {
-                gOpenVolume.erase(Vol);
-                Vol = gOpenVolume.end();
-            }
-
-            if (Vol != gOpenVolume.end())
-                mAdfVolume = Vol->second.lock();
-            else {
-                mAdfVolume = std::move(std::shared_ptr<Volume>(adfMount(mAdfDevice.get(), 0, true), adfUnMount));
-                gOpenVolume.insert(std::make_pair(std::wstring(AdfPath.c_str()), mAdfVolume));
-            }
-            if (mAdfVolume) {
-                mPath = AdfPath;
-                return true;
-            }
+        mAdfDevice = std::move(std::shared_ptr<Device>(adfMountDev(const_cast<CHAR*>(Filepath.c_str()), true), adfUnMountDev));
+        if(mAdfDevice)
+            mAdfVolume = std::shared_ptr<Volume>(adfMount(mAdfDevice.get(), 0, true), adfUnMount);
+                
+        if (mAdfVolume) {
+            mPath = AdfPath;
+            return true;
         }
 
         return false;
@@ -345,12 +320,14 @@ bool cADFPluginData::ReadDirectory(LPVFSREADDIRDATAW lpRDD) {
     return true;
 }
 
-bool cADFPluginData::ReadFile(File* pFile, size_t pBytes, std::uint8_t* pBuffer) {
+bool cADFPluginData::ReadFile(File* pFile, size_t pBytes, std::uint8_t* pBuffer, LPDWORD pReadSize) {
 
     if (!pFile)
         return false;
 
-    return (adfReadFile(pFile, (int32_t) pBytes, pBuffer) > 0);
+    *pReadSize = adfReadFile(pFile, (int32_t)pBytes, pBuffer);
+
+    return (*pReadSize > 0);
 }
 
 File* cADFPluginData::OpenFile(std::wstring pPath) {
@@ -359,7 +336,9 @@ File* cADFPluginData::OpenFile(std::wstring pPath) {
 
         auto Paths = GetPaths(pPath);
 
-        return adfOpenFile(mAdfVolume.get(), (char*)Paths[Paths.size() - 1].c_str(), (char*) "r");
+        auto Filename = ws2s(Paths[Paths.size() - 1]);
+
+        return adfOpenFile(mAdfVolume.get(), (char*)Filename.c_str(), (char*) "r");
     }
 
     return 0;
@@ -467,7 +446,7 @@ cADFFindData* cADFPluginData::FindFirstFile(LPTSTR lpszPath, LPWIN32_FIND_DATA l
         auto filemask = depth[depth.size() - 1];
         auto Filepath = ws2s(filemask);
 
-        findData->mFindMask = std::regex("." + Filepath);
+        findData->mFindMask = std::regex("(." + Filepath + ")");
 
         findData->mHead = GetCurrentDirectoryList();
         findData->mCell = findData->mHead.get();
@@ -763,7 +742,7 @@ int cADFPluginData::ExtractFile(LPVFSBATCHDATAW lpBatchData, const Entry* pEntry
 
 size_t cADFPluginData::TotalFreeBlocks(const std::wstring& pFile) {
 
-    if (!LoadFile(pFile))
+    if (!LoadFile(pFile)) 
         return false;
 
     size_t blocks = adfCountFreeBlocks(mAdfVolume.get());
@@ -806,4 +785,23 @@ UINT cADFPluginData::BatchOperation(LPTSTR lpszPath, LPVFSBATCHDATAW lpBatchData
     }
 
     return result;
+}
+
+bool cADFPluginData::PropGet(vfsProperty propId, LPVOID lpPropData, LPVOID lpData1, LPVOID lpData2, LPVOID lpData3) {
+
+    if (propId == VFSPROP_SHOWTHUMBNAILS) {
+
+        *(bool*)lpPropData = true;
+
+        return true;
+    }
+
+    if (propId == VFSPROP_FUNCAVAILABILITY) {
+        unsigned __int64* Data = (unsigned __int64*)lpPropData;
+
+        *Data &= ~(VFSFUNCAVAIL_DELETE | VFSFUNCAVAIL_MAKEDIR | VFSFUNCAVAIL_RENAME | VFSFUNCAVAIL_SETATTR | VFSFUNCAVAIL_CLIPCUT | VFSFUNCAVAIL_CLIPPASTE | VFSFUNCAVAIL_CLIPPASTESHORTCUT | VFSFUNCAVAIL_DUPLICATE);
+        return true;
+    }
+
+    return false;
 }

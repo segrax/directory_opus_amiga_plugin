@@ -5,9 +5,6 @@ typedef std::shared_ptr<Volume> spVolume;
 typedef std::weak_ptr<Device>   wpDevice;
 typedef std::weak_ptr<Volume>   wpVolume;
 
-extern std::map<std::wstring, wpDevice>  gOpenFiles;
-extern std::map<std::wstring, wpVolume>     gOpenVolume;
-
 class cADFFindData {
 
 public:
@@ -47,7 +44,7 @@ public:
     bool AdfChangeToPath(const std::wstring& pPath, bool pIgnoreLast = false);
 
     bool ReadDirectory(LPVFSREADDIRDATAW lpRDD);
-    bool ReadFile(File* pFile, size_t pBytes, std::uint8_t* pBuffer );
+    bool ReadFile(File* pFile, size_t pBytes, std::uint8_t* pBuffer, LPDWORD pReadSize );
 
     File* OpenFile(std::wstring pPath);
     void CloseFile(File* pFile);
@@ -71,4 +68,6 @@ public:
 
     int ContextVerb(LPVFSCONTEXTVERBDATAW lpVerbData);
     UINT BatchOperation(LPTSTR lpszPath, LPVFSBATCHDATAW lpBatchData);
+    bool PropGet(vfsProperty propId, LPVOID lpPropData, LPVOID lpData1, LPVOID lpData2, LPVOID lpData3);
+
 };
